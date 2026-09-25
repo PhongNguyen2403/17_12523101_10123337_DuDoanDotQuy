@@ -1,7 +1,7 @@
 const { v4: uuidv4 } = require("uuid");
 
 function requestIdMiddleware(req, res, next) {
-  const requestId = uuidv4();
+  const requestId = req.get("X-Request-ID") || uuidv4();
   req.requestId = requestId;
   res.setHeader("X-Request-ID", requestId);
 
