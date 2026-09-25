@@ -1,0 +1,40 @@
+{
+  "model_name": "logistic_regression",
+  "model_version": "1.0.0",
+  "library_versions": {
+    "scikit_learn": "1.8.0",
+    "numpy": "2.4.4",
+    "pandas": "3.0.2"
+  },
+  "selected_reason": "Đã loại model có Precision lớp 1 dưới 0.15 nếu còn model hợp lệ; sau đó chọn Recall test cao nhất, hòa thì chọn ROC-AUC cao hơn.",
+  "selection_rule": {
+    "minimum_precision_class1": 0.15,
+    "primary_metric": "recall_class1",
+    "tie_breaker": "roc_auc"
+  },
+  "metrics": {
+    "recall_class1": 0.8039,
+    "roc_auc": 0.8819,
+    "precision_class1": 0.1814,
+    "f1_class1": 0.296,
+    "inference_ms_per_sample": 0.012,
+    "file_size_kb": 2.3
+  },
+  "best_params": {
+    "clf__C": 0.01
+  },
+  "trained_at_utc": "2026-09-24T09:39:05.308928+00:00",
+  "all_models_compared": [
+    "logistic_regression",
+    "naive_bayes",
+    "svm_rbf",
+    "random_forest"
+  ],
+  "sklearn_pipeline_steps": [
+    "preprocess (ColumnTransformer)",
+    "clf"
+  ],
+  "target": "stroke",
+  "positive_class": 1,
+  "note": "Model được huấn luyện trên dữ liệu giả lập (synthetic) bám schema Kaggle. Thay dataset thật vào ai-models/data/ rồi chạy lại train.py + evaluate.py trước khi dùng thật."
+}

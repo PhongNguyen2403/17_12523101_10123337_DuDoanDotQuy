@@ -30,6 +30,14 @@ ai-models/models/*
 ai-models/data/*
 !ai-models/models/.gitkeep
 !ai-models/data/.gitkeep
+!ai-models/models/model.joblib
+!ai-models/models/schema.json
+!ai-models/models/metadata.json
+!ai-models/models/training_metadata.json
+!ai-models/models/comparison.json
+!ai-models/models/candidates/
+!ai-models/models/candidates/*.joblib
+!ai-models/data/DATA.md
 !ai-models/data/dataset.zip
 
 # Reports generated locally

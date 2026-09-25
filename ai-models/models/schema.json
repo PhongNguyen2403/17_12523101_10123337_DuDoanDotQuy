@@ -1,0 +1,95 @@
+{
+  "target": "stroke",
+  "features": [
+    {
+      "name": "age",
+      "type": "number",
+      "label": "Tuổi",
+      "min": 0,
+      "max": 120
+    },
+    {
+      "name": "avg_glucose_level",
+      "type": "number",
+      "label": "Mức đường huyết trung bình",
+      "min": 40,
+      "max": 300
+    },
+    {
+      "name": "bmi",
+      "type": "number",
+      "label": "Chỉ số khối cơ thể (BMI)",
+      "min": 10,
+      "max": 100
+    },
+    {
+      "name": "hypertension",
+      "type": "boolean",
+      "label": "Tiền sử cao huyết áp",
+      "values": [
+        0,
+        1
+      ]
+    },
+    {
+      "name": "heart_disease",
+      "type": "boolean",
+      "label": "Tiền sử bệnh tim",
+      "values": [
+        0,
+        1
+      ]
+    },
+    {
+      "name": "gender",
+      "type": "category",
+      "label": "Giới tính",
+      "values": [
+        "Male",
+        "Female",
+        "Other"
+      ]
+    },
+    {
+      "name": "ever_married",
+      "type": "category",
+      "label": "Đã từng kết hôn",
+      "values": [
+        "Yes",
+        "No"
+      ]
+    },
+    {
+      "name": "work_type",
+      "type": "category",
+      "label": "Loại hình công việc",
+      "values": [
+        "children",
+        "Govt_job",
+        "Never_worked",
+        "Private",
+        "Self-employed"
+      ]
+    },
+    {
+      "name": "Residence_type",
+      "type": "category",
+      "label": "Nơi sinh sống",
+      "values": [
+        "Rural",
+        "Urban"
+      ]
+    },
+    {
+      "name": "smoking_status",
+      "type": "category",
+      "label": "Tình trạng hút thuốc",
+      "values": [
+        "formerly smoked",
+        "never smoked",
+        "smokes",
+        "Unknown"
+      ]
+    }
+  ]
+}

@@ -44,8 +44,8 @@ Tên repo chuẩn quy ước: `17_12523101_10123337_DuDoanDotQuy`
 
 | STT | Họ và tên | MSSV | Vai trò & Phân công công việc | % Hoàn thành |
 |---|---|---|---|---|
-| 1 | Nguyễn Thế Phong | 12523101 | Trưởng nhóm: EDA dữ liệu, Huấn luyện 2 Model, Xây dựng AI Service (FastAPI) & Dockerize, Xây dựng  Frontend (React). | 100% |
-| 2 | Lê Quang Trường | 10123337 | Thành viên:Huấn luyện 2 Model, Xây dựng Backend (Node.js/Express), Kết nối MongoDB, Deploy Tunnel/Ngrok & Load Test. | 100% |
+| 1 | Nguyễn Thế Phong | 12523101 | Trưởng nhóm: EDA dữ liệu, Huấn luyện 2 Model(logistic regression, random forest), Xây dựng AI Service (FastAPI) & Dockerize, Xây dựng  Frontend (React). | 100% |
+| 2 | Lê Quang Trường | 10123337 | Thành viên:Huấn luyện 2 Model (SVM,naive bayes ), Xây dựng Backend (Node.js/Express), Kết nối MongoDB, Deploy Tunnel/Ngrok & Load Test. | 100% |
 
 ## 2. Bài toán (Problem Formulation)
 

@@ -1,0 +1,56 @@
+[
+  {
+    "model": "logistic_regression",
+    "best_params": {
+      "clf__C": 0.01
+    },
+    "recall_class1": 0.8039,
+    "roc_auc": 0.8819,
+    "precision_class1": 0.1814,
+    "f1_class1": 0.296,
+    "inference_ms_per_sample": 0.021,
+    "file_size_kb": 2.3,
+    "model_path": "C:\\Users\\Admin\\Desktop\\17_12523101_10123337_DuDoanDotQuy\\ai-models\\src\\..\\models\\candidates\\logistic_regression.joblib"
+  },
+  {
+    "model": "naive_bayes",
+    "best_params": {
+      "clf__var_smoothing": 1e-09
+    },
+    "recall_class1": 1.0,
+    "roc_auc": 0.8832,
+    "precision_class1": 0.058,
+    "f1_class1": 0.1096,
+    "inference_ms_per_sample": 0.019,
+    "file_size_kb": 2.6,
+    "model_path": "C:\\Users\\Admin\\Desktop\\17_12523101_10123337_DuDoanDotQuy\\ai-models\\src\\..\\models\\candidates\\naive_bayes.joblib"
+  },
+  {
+    "model": "svm_rbf",
+    "best_params": {
+      "clf__C": 1,
+      "clf__gamma": "auto"
+    },
+    "recall_class1": 0.7843,
+    "roc_auc": 0.8757,
+    "precision_class1": 0.1794,
+    "f1_class1": 0.292,
+    "inference_ms_per_sample": 0.317,
+    "file_size_kb": 54.7,
+    "model_path": "C:\\Users\\Admin\\Desktop\\17_12523101_10123337_DuDoanDotQuy\\ai-models\\src\\..\\models\\candidates\\svm_rbf.joblib"
+  },
+  {
+    "model": "random_forest",
+    "best_params": {
+      "clf__max_depth": 6,
+      "clf__n_estimators": 200
+    },
+    "recall_class1": 0.6863,
+    "roc_auc": 0.8821,
+    "precision_class1": 0.2381,
+    "f1_class1": 0.3535,
+    "inference_ms_per_sample": 0.083,
+    "file_size_kb": 542.0,
+    "model_path": "C:\\Users\\Admin\\Desktop\\17_12523101_10123337_DuDoanDotQuy\\ai-models\\src\\..\\models\\candidates\\random_forest.joblib"
+  }
+]
