@@ -1,0 +1,37 @@
+services:
+  frontend:
+    build:
+      context: ./app/frontend
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    environment:
+      API_BASE_URL: ${FRONTEND_API_BASE_URL:-http://localhost:8000}
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./app/backend
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    environment:
+      AI_SERVICE_URL: ${AI_SERVICE_URL:-http://ai-service:8001}
+    depends_on:
+      - ai-service
+    restart: unless-stopped
+
+  ai-service:
+    build:
+      context: ./ai-models/service
+    ports:
+      - "${AI_SERVICE_PORT:-8001}:8001"
+    environment:
+      MODEL_PATH: ${MODEL_PATH:-/app/models/model.joblib}
+    volumes:
+      - ./ai-models/models:/app/models:ro
+    restart: unless-stopped
+
+networks:
+  default:
+    name: du-doan-dot-quy-network
