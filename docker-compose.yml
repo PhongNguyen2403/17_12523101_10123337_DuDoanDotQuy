@@ -43,8 +43,6 @@ services:
     build:
       context: ./app/frontend
       dockerfile: Dockerfile
-      args:
-        VITE_API_URL: /api
     container_name: stroke-frontend
     ports:
       - "${PORT_FE:-3000}:80"
