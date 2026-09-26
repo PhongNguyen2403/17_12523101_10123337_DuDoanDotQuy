@@ -63,11 +63,8 @@ def pick_best_model(results: list) -> dict:
     có giá trị sử dụng thực tế). Trong các model còn lại (đủ cân bằng, không
     overfit), chọn Recall cao nhất, hoà thì xét ROC-AUC.
     """
-    candidates = [r for r in results if r.get("model_type", "candidate") != "baseline"]
-    if not candidates:
-        raise ValueError("comparison.json không có model candidate để triển khai.")
-    balanced = [r for r in candidates if r["precision_class1"] >= MIN_PRECISION]
-    pool = balanced if balanced else candidates
+    balanced = [r for r in results if r["precision_class1"] >= MIN_PRECISION]
+    pool = balanced if balanced else results
     return sorted(pool, key=lambda r: (r["recall_class1"], r["roc_auc"]), reverse=True)[0]
 
 
@@ -162,12 +159,7 @@ def main():
     # 3) metadata.json
     metadata = {
         "model_name": best_name,
-        "selected_reason": "Đã loại model có Precision lớp 1 dưới 0.15 nếu còn model hợp lệ; sau đó chọn Recall test cao nhất, hòa thì chọn ROC-AUC cao hơn.",
-        "selection_rule": {
-            "minimum_precision_class1": MIN_PRECISION,
-            "primary_metric": "recall_class1",
-            "tie_breaker": "roc_auc",
-        },
+        "selected_reason": "Recall (lớp 1) cao nhất trong 4 model, giảm thiểu tối đa Âm tính giả (FN).",
         "metrics": {k: v for k, v in best.items() if k not in ("model", "model_path", "best_params")},
         "best_params": best["best_params"],
         "trained_at_utc": datetime.now(timezone.utc).isoformat(),

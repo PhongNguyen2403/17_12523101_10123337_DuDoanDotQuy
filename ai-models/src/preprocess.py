@@ -6,9 +6,6 @@ pipeline lúc suy luận (inference) xử lý dữ liệu giống hệt lúc hu�
 """
 
 import os
-from pathlib import Path
-from zipfile import ZipFile
-
 import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
@@ -16,7 +13,6 @@ from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 
 DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "healthcare-dataset-stroke-data.csv")
-DATA_ZIP_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "dataset.zip")
 
 NUMERIC_FEATURES = ["age", "avg_glucose_level", "bmi"]
 BINARY_FEATURES = ["hypertension", "heart_disease"]
@@ -28,20 +24,12 @@ ALL_FEATURES = NUMERIC_FEATURES + BINARY_FEATURES + CATEGORICAL_FEATURES
 
 
 def load_raw_data(path: str = DATA_PATH) -> pd.DataFrame:
-    if os.path.exists(path):
-        df = pd.read_csv(path)
-    elif os.path.exists(DATA_ZIP_PATH):
-        with ZipFile(DATA_ZIP_PATH) as archive:
-            csv_names = [name for name in archive.namelist() if Path(name).name == Path(DATA_PATH).name]
-            if not csv_names:
-                raise FileNotFoundError(f"Không tìm thấy {Path(DATA_PATH).name} trong {DATA_ZIP_PATH}.")
-            with archive.open(csv_names[0]) as csv_file:
-                df = pd.read_csv(csv_file)
-    else:
+    if not os.path.exists(path):
         raise FileNotFoundError(
-            f"Không tìm thấy {path} hoặc {DATA_ZIP_PATH}. "
-            f"Hãy đặt dataset.zip vào ai-models/data/."
+            f"Không tìm thấy {path}. Hãy giải nén ai-models/data/dataset.zip trước, "
+            f"hoặc chạy ai-models/src/make_synthetic_dataset.py để tạo dữ liệu mẫu."
         )
+    df = pd.read_csv(path)
     df = df.drop(columns=[c for c in DROP_COLS if c in df.columns])
     # Loại một số outlier hiếm gặp trong bản gốc (gender = "Other" chỉ có 1 dòng)
     return df

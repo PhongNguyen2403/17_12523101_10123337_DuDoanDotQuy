@@ -19,10 +19,6 @@ async function getSchema() {
 
 function validateAgainstSchema(payload, schema) {
   const errors = [];
-  const featureNames = new Set(schema.features.map((feature) => feature.name));
-  for (const key of Object.keys(payload)) {
-    if (!featureNames.has(key)) errors.push(`Trường không được hỗ trợ: ${key}`);
-  }
   for (const feature of schema.features) {
     const value = payload[feature.name];
     if (value === undefined || value === null) {
@@ -39,10 +35,6 @@ function validateAgainstSchema(payload, schema) {
     }
     if (feature.type === "number" && typeof value !== "number") {
       errors.push(`${feature.name} phải là số`);
-    }
-    if (feature.type === "number" && typeof value === "number") {
-      if (feature.min !== undefined && value < feature.min) errors.push(`${feature.name} phải >= ${feature.min}`);
-      if (feature.max !== undefined && value > feature.max) errors.push(`${feature.name} phải <= ${feature.max}`);
     }
   }
   return errors;

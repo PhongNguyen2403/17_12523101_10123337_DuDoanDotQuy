@@ -1,44 +1,27 @@
-# Environment files
-.env
-.env.*
-!.env.example
-
 # Python
-__pycache__/
-*.py[cod]
-.venv/
 venv/
-.pytest_cache/
-.mypy_cache/
-
-# Node.js
-node_modules/
-dist/
-build/
-
-# Jupyter
+.venv/
+__pycache__/
+*.pyc
 .ipynb_checkpoints/
 
-# IDE and OS
-.vscode/
-.idea/
+# Node
+node_modules/
+dist/
+npm-debug.log*
+
+# Secrets / env
+.env
+kaggle.json
+*.pem
+
+# OS
 .DS_Store
 Thumbs.db
 
-# Generated model and data artifacts
-ai-models/models/*
-ai-models/data/*
-!ai-models/models/.gitkeep
-!ai-models/data/.gitkeep
-!ai-models/models/model.joblib
-!ai-models/models/schema.json
-!ai-models/models/metadata.json
-!ai-models/models/training_metadata.json
-!ai-models/models/comparison.json
-!ai-models/models/candidates/
-!ai-models/models/candidates/*.joblib
-!ai-models/data/DATA.md
-!ai-models/data/dataset.zip
+# Editor
+.vscode/
+.idea/
 
-# Reports generated locally
-docs/figures/generated/
+# Model candidates trung gian (giữ lại model.joblib, schema.json, metadata.json cuối cùng)
+ai-models/models/candidates/

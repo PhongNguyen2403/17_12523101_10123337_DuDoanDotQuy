@@ -8,9 +8,9 @@
     "roc_auc": 0.8819,
     "precision_class1": 0.1814,
     "f1_class1": 0.296,
-    "inference_ms_per_sample": 0.021,
+    "inference_ms_per_sample": 0.012,
     "file_size_kb": 2.3,
-    "model_path": "C:\\Users\\Admin\\Desktop\\17_12523101_10123337_DuDoanDotQuy\\ai-models\\src\\..\\models\\candidates\\logistic_regression.joblib"
+    "model_path": "/home/claude/repo/17_12523101_10123337_DuDoanDotQuy/ai-models/src/../models/candidates/logistic_regression.joblib"
   },
   {
     "model": "naive_bayes",
@@ -21,9 +21,9 @@
     "roc_auc": 0.8832,
     "precision_class1": 0.058,
     "f1_class1": 0.1096,
-    "inference_ms_per_sample": 0.019,
+    "inference_ms_per_sample": 0.015,
     "file_size_kb": 2.6,
-    "model_path": "C:\\Users\\Admin\\Desktop\\17_12523101_10123337_DuDoanDotQuy\\ai-models\\src\\..\\models\\candidates\\naive_bayes.joblib"
+    "model_path": "/home/claude/repo/17_12523101_10123337_DuDoanDotQuy/ai-models/src/../models/candidates/naive_bayes.joblib"
   },
   {
     "model": "svm_rbf",
@@ -35,9 +35,9 @@
     "roc_auc": 0.8757,
     "precision_class1": 0.1794,
     "f1_class1": 0.292,
-    "inference_ms_per_sample": 0.317,
-    "file_size_kb": 54.7,
-    "model_path": "C:\\Users\\Admin\\Desktop\\17_12523101_10123337_DuDoanDotQuy\\ai-models\\src\\..\\models\\candidates\\svm_rbf.joblib"
+    "inference_ms_per_sample": 0.183,
+    "file_size_kb": 51.2,
+    "model_path": "/home/claude/repo/17_12523101_10123337_DuDoanDotQuy/ai-models/src/../models/candidates/svm_rbf.joblib"
   },
   {
     "model": "random_forest",
@@ -49,8 +49,8 @@
     "roc_auc": 0.8821,
     "precision_class1": 0.2381,
     "f1_class1": 0.3535,
-    "inference_ms_per_sample": 0.083,
-    "file_size_kb": 542.0,
-    "model_path": "C:\\Users\\Admin\\Desktop\\17_12523101_10123337_DuDoanDotQuy\\ai-models\\src\\..\\models\\candidates\\random_forest.joblib"
+    "inference_ms_per_sample": 0.051,
+    "file_size_kb": 541.5,
+    "model_path": "/home/claude/repo/17_12523101_10123337_DuDoanDotQuy/ai-models/src/../models/candidates/random_forest.joblib"
   }
 ]

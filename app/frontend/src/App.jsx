@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { fetchSchema, fetchModelInfo, submitPrediction, fetchHistory } from "./api.js";
+import { fetchSchema, submitPrediction, fetchHistory } from "./api.js";
 
 const FALLBACK_SCHEMA = {
   target: "stroke",
@@ -67,7 +67,6 @@ function FormField({ feature, value, onChange }) {
 
 export default function App() {
   const [schema, setSchema] = useState(FALLBACK_SCHEMA);
-  const [modelInfo, setModelInfo] = useState(null);
   const [values, setValues] = useState({});
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
@@ -79,7 +78,6 @@ export default function App() {
     fetchSchema()
       .then((s) => setSchema(s))
       .catch(() => setSchema(FALLBACK_SCHEMA));
-    fetchModelInfo().then(setModelInfo).catch(() => setModelInfo(null));
   }, []);
 
   useEffect(() => {
@@ -124,12 +122,7 @@ export default function App() {
       <header className="masthead">
         <div className="masthead-inner">
           <h1>Kiểm tra nguy cơ đột quỵ</h1>
-          <p>Nhập chỉ số sinh học và thói quen sinh hoạt để nhận đánh giá xác suất nguy cơ, dựa trên model đã được chọn theo Recall và ROC-AUC.</p>
-          {modelInfo?.metrics && (
-            <p className="model-info">
-              Model đang chạy: <strong>{modelInfo.model_name}</strong> · Recall {(modelInfo.metrics.recall_class1 * 100).toFixed(1)}% · ROC-AUC {(modelInfo.metrics.roc_auc * 100).toFixed(1)}%
-            </p>
-          )}
+          <p>Nhập chỉ số sinh học và thói quen sinh hoạt để nhận đánh giá xác suất nguy cơ, dựa trên mô hình Logistic Regression được huấn luyện để ưu tiên không bỏ sót ca có nguy cơ thật.</p>
         </div>
       </header>
 
@@ -173,7 +166,7 @@ export default function App() {
                 <dl className="result-meta">
                   <div><dt>Mô hình</dt><dd>{result.model_name}</dd></div>
                   <div><dt>Thời gian suy luận</dt><dd>{result.inference_ms} ms</dd></div>
-                  <div><dt>Mã yêu cầu</dt><dd className="mono">{result.request_id?.slice(0, 8)}</dd></div>
+                  <div><dt>Mã yêu cầu</dt><dd className="mono">{result.requestId?.slice(0, 8)}</dd></div>
                 </dl>
                 <p className="disclaimer">
                   Đây là công cụ hỗ trợ tham khảo dựa trên mô hình học máy, không thay thế chẩn đoán y khoa.

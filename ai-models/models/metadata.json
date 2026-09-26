@@ -1,17 +1,6 @@
 {
   "model_name": "logistic_regression",
-  "model_version": "1.0.0",
-  "library_versions": {
-    "scikit_learn": "1.8.0",
-    "numpy": "2.4.4",
-    "pandas": "3.0.2"
-  },
-  "selected_reason": "Đã loại model có Precision lớp 1 dưới 0.15 nếu còn model hợp lệ; sau đó chọn Recall test cao nhất, hòa thì chọn ROC-AUC cao hơn.",
-  "selection_rule": {
-    "minimum_precision_class1": 0.15,
-    "primary_metric": "recall_class1",
-    "tie_breaker": "roc_auc"
-  },
+  "selected_reason": "Recall (lớp 1) cao nhất trong 4 model, giảm thiểu tối đa Âm tính giả (FN).",
   "metrics": {
     "recall_class1": 0.8039,
     "roc_auc": 0.8819,

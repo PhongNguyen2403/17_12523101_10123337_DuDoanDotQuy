@@ -14,26 +14,26 @@
 │   ├── frontend/               # React (Vite) + Dockerfile
 │   └── backend/                # Node.js/Express API + Dockerfile + tests/
 ├── ai-models/
-│   ├── colab/                  # 01_eda, 02_preprocess, 03_train, 04_evaluate
+│   ├── colab/                  # (xem ghi chú bên dưới)
 │   ├── src/                    # preprocess.py, train.py, evaluate.py, make_synthetic_dataset.py
 │   ├── data/                   # dataset.zip + DATA.md
-│   ├── models/                 # model.joblib, candidates/, comparison.json, schema.json, metadata.json
+│   ├── models/                 # model.joblib, schema.json, metadata.json
 │   ├── service/                # FastAPI prediction API + Dockerfile + tests/
 │   └── requirements.txt
 ├── docs/
-│   ├── slide.pptx               # chưa có — bổ sung trước hạn nộp slide
-│   ├── baocao.docx              # chưa có — bổ sung trước hạn nộp báo cáo
-│   └── figures/                 # 5 hình EDA + confusion matrix + so sánh model
+│   ├── slide.pptx               # (chưa tạo — xem mục 14)
+│   ├── baocao.docx              # (chưa tạo — xem mục 14)
+│   └── figures/                 # 6 hình EDA + confusion matrix (đã sinh)
 ├── docker-compose.yml
 ├── .env.example
 ├── .gitignore
 └── README.md
 ```
 
-Các notebook trong `ai-models/colab/` chạy độc lập theo thứ tự `01_eda` → `02_preprocess`
-→ `03_train` → `04_evaluate`. Notebook đọc trực tiếp CSV bên trong `dataset.zip`, không cần
-tạo thư mục `data_from_zip`. Khi chạy trên VS Code, artifact trung gian nằm ở `.colab_artifacts/`;
-cell cuối của `03_train` đồng bộ pipeline và các model ứng viên vào `ai-models/models/`.
+> **Ghi chú về `ai-models/colab/`:** notebook Jupyter (.ipynb) chưa được tạo trong lượt này;
+> logic tương đương đã có đầy đủ trong `ai-models/src/*.py` (chạy trực tiếp bằng `python`,
+> không cần Colab). Có thể copy nội dung từng file `.py` vào từng cell notebook nếu cần nộp
+> đúng định dạng `.ipynb`.
 
 ---
 
@@ -44,8 +44,8 @@ Tên repo chuẩn quy ước: `17_12523101_10123337_DuDoanDotQuy`
 
 | STT | Họ và tên | MSSV | Vai trò & Phân công công việc | % Hoàn thành |
 |---|---|---|---|---|
-| 1 | Nguyễn Thế Phong | 12523101 | Trưởng nhóm: EDA dữ liệu, Huấn luyện 2 Model(logistic regression, random forest), Xây dựng AI Service (FastAPI) & Dockerize, Xây dựng  Frontend (React). | 100% |
-| 2 | Lê Quang Trường | 10123337 | Thành viên:Huấn luyện 2 Model (SVM,naive bayes ), Xây dựng Backend (Node.js/Express), Kết nối MongoDB, Deploy Tunnel/Ngrok & Load Test. | 100% |
+| 1 | Nguyễn Thế Phong | 12523101 | Trưởng nhóm: EDA dữ liệu, Huấn luyện 4 Model, Xây dựng AI Service (FastAPI) & Dockerize. | 100% |
+| 2 | Lê Quang Trường | 10123337 | Thành viên: Xây dựng Backend (Node.js/Express), Frontend (React), Kết nối MongoDB, Deploy Tunnel/Ngrok & Load Test. | 100% |
 
 ## 2. Bài toán (Problem Formulation)
 
@@ -67,8 +67,10 @@ dựa trên các chỉ số sinh học và yếu tố thói quen sinh hoạt.
 > `ai-models/src/make_synthetic_dataset.py` vì môi trường tạo repo này không truy cập được
 > Kaggle trực tiếp. Xem chi tiết cách thay bằng dữ liệu thật tại `ai-models/data/DATA.md`.
 
-Notebook và script đọc trực tiếp `healthcare-dataset-stroke-data.csv` bên trong
-`ai-models/data/dataset.zip`; không cần giải nén dataset.
+Giải nén dataset:
+```bash
+unzip ai-models/data/dataset.zip -d ai-models/data/
+```
 
 ### Mô tả các đặc trưng (Features)
 - `id`: Mã định danh bệnh nhân (loại bỏ khi huấn luyện).
@@ -113,10 +115,8 @@ Xem số liệu đầy đủ tại `ai-models/models/comparison.json` và `ai-mo
 ## 5. Đóng gói Model (Model Packaging)
 
 - File Model Pipeline: `ai-models/models/model.joblib`
-- Các pipeline ứng viên: `ai-models/models/candidates/*.joblib`
 - Schema cấu trúc dữ liệu: `ai-models/models/schema.json`
 - Metadata mô hình: `ai-models/models/metadata.json`
-- Metadata lần train: `ai-models/models/training_metadata.json`
 
 Tái tạo toàn bộ pipeline (từ dữ liệu thô đến model đóng gói):
 ```bash
@@ -148,8 +148,7 @@ Microservices với 3 Docker container nối chung mạng `stroke-net`:
   gửi request tới BE, hiển thị kết quả xác suất và lịch sử.
 - **Backend:** Validate dữ liệu đầu vào theo schema, gọi AI Service, lưu lịch sử vào MongoDB,
   log toàn bộ luồng request kèm `request_id`.
-- **AI Service:** Tự động load `model.joblib` khi khởi động, cung cấp `POST /predict`, `GET /health`,
-  `GET /schema` và `GET /model-info`.
+- **AI Service:** Tự động load `model.joblib` khi khởi động, cung cấp `POST /predict` và `GET /health`.
 
 ## 7. Hướng dẫn chạy trên máy local (Local Setup)
 
@@ -171,38 +170,12 @@ Kiểm tra trạng thái hệ thống:
 
 ## 8. Hướng dẫn huấn luyện lại Model (Retraining Guide)
 
-### Chạy bằng script trong VS Code
-
-```bash
-python ai-models/src/train.py
-python ai-models/src/evaluate.py
-python ai-models/src/validate_contract.py
-```
-
-### Chạy bằng notebook
-
-Mở và chạy lần lượt `ai-models/colab/01_eda.ipynb`, `02_preprocess.ipynb`,
-`03_train.ipynb`, `04_evaluate.ipynb`. Toàn bộ logic tương ứng nằm trong:
+Xem mục 5. Toàn bộ logic (tương đương `01_eda`, `02_preprocess`, `03_train`, `04_evaluate`)
+nằm trong `ai-models/src/*.py`:
 - `preprocess.py`: xử lý missing value (`bmi`), mã hóa đặc trưng, ColumnTransformer.
 - `train.py`: huấn luyện 4 model + GridSearchCV.
 - `evaluate.py`: so sánh metric, chọn model, đóng gói `model.joblib`/`schema.json`/`metadata.json`,
   sinh 5 hình EDA + confusion matrix vào `docs/figures/`.
-
-Phần 03 lưu 4 pipeline ứng viên tại `ai-models/models/candidates/`, bảng so sánh tại
-`ai-models/models/comparison.json` và metadata train tại `ai-models/models/training_metadata.json`.
-Phần 04 chọn model cuối và cập nhật `ai-models/models/model.joblib`.
-
-Sau khi chạy xong phần 04 trên Colab, cell export cuối tạo `stroke_models_evaluated.zip`.
-Tải file này về máy, sau đó đồng bộ artifact vào repo bằng:
-
-```bash
-python ai-models/src/import_colab_artifacts.py path/to/stroke_models_evaluated.zip
-```
-
-Script sẽ cập nhật `model.joblib`, `schema.json`, `metadata.json`, `comparison.json`,
-`training_metadata.json` và các pipeline trong `ai-models/models/candidates/`.
-
-Backend cung cấp cả `GET /api/history` (endpoint chuẩn) và `GET /api/predictions` (alias tương thích).
 
 ## 9. Biến môi trường (Environment Variables)
 
@@ -216,7 +189,6 @@ Quản lý qua file `.env` (mẫu tại `.env.example`):
 | `AI_SERVICE_URL` | http://ai-service:8001 | https://stroke-ai-service.onrender.com | Backend gọi sang AI Service |
 | `API_URL` | http://localhost:8000 | https://stroke-backend.onrender.com | Frontend gọi sang Backend API |
 | `MONGODB_URI` | mongodb+srv://... | mongodb+srv://... | Chuỗi kết nối CSDL MongoDB Atlas |
-| `CORS_ORIGIN` | * | https://domain-frontend | Domain được phép gọi Backend |
 
 ## 10. Phương án triển khai (Deployment)
 
@@ -253,9 +225,7 @@ cập nhật `.env`, ghi nhật ký vào mục 12, cập nhật link mới tại
 ## 14. Việc còn lại trước khi nộp bài
 
 - [ ] Thay `ai-models/data/dataset.zip` bằng dataset Kaggle thật, chạy lại `train.py` + `evaluate.py`.
-- [x] Có đủ 4 notebook `.ipynb` trong `ai-models/colab/`.
-- [x] Có contract check tại `ai-models/src/validate_contract.py`.
-- [ ] Tạo `docs/baocao.docx` với nội dung báo cáo chính thức của nhóm.
-- [ ] Tạo `docs/slide.pptx` với nội dung slide chính thức của nhóm.
+- [ ] Tạo `docs/baocao.docx` (báo cáo chi tiết) và `docs/slide.pptx` (slide bảo vệ) từ nội dung README này + hình trong `docs/figures/`.
+- [ ] Tạo notebook `.ipynb` trong `ai-models/colab/` nếu cần nộp đúng định dạng.
 - [ ] Deploy thật lên Vercel/Render, điền lại mục 11 và 12.
 - [ ] Chạy k6 load test thật, điền lại mục 13.
