@@ -18,7 +18,10 @@ router.post("/predict", async (req, res) => {
 
     const aiResp = await fetch(`${aiServiceUrl}/predict`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "X-Request-ID": requestId,
+      },
       body: JSON.stringify(req.body),
       timeout: 10000,
     });
@@ -50,14 +53,17 @@ router.post("/predict", async (req, res) => {
   }
 });
 
-router.get("/predictions", async (req, res) => {
+async function getHistory(req, res) {
   if (!isDbConnected()) {
     return res.status(503).json({ message: "Cơ sở dữ liệu chưa kết nối." });
   }
   const limit = Math.min(parseInt(req.query.limit, 10) || 20, 100);
   const history = await Prediction.find().sort({ createdAt: -1 }).limit(limit).lean();
   return res.status(200).json({ count: history.length, history });
-});
+}
+
+router.get("/history", getHistory);
+router.get("/predictions", getHistory);
 
 router.get("/schema", async (_req, res) => {
   try {
@@ -65,6 +71,18 @@ router.get("/schema", async (_req, res) => {
     return res.status(200).json(schema);
   } catch (err) {
     return res.status(502).json({ message: "Không lấy được schema từ AI Service", detail: err.message });
+  }
+});
+
+router.get("/model-info", async (_req, res) => {
+  try {
+    const resp = await fetch(`${aiServiceUrl}/model-info`, { timeout: 5000 });
+    if (!resp.ok) {
+      return res.status(502).json({ message: "Không lấy được thông tin model từ AI Service" });
+    }
+    return res.status(200).json(await resp.json());
+  } catch (err) {
+    return res.status(502).json({ message: "AI Service không khả dụng", detail: err.message });
   }
 });
 

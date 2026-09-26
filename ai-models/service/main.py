@@ -17,7 +17,9 @@ from contextlib import asynccontextmanager
 from typing import Literal, Optional
 
 import joblib
+import numpy as np
 import pandas as pd
+import sklearn
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -32,6 +34,52 @@ SCHEMA_PATH = os.environ.get("SCHEMA_PATH", os.path.join(MODELS_DIR, "schema.jso
 METADATA_PATH = os.environ.get("METADATA_PATH", os.path.join(MODELS_DIR, "metadata.json"))
 
 state = {"model": None, "schema": None, "metadata": None}
+STARTED_AT = time.perf_counter()
+EXPECTED_FEATURES = (
+    "age",
+    "avg_glucose_level",
+    "bmi",
+    "hypertension",
+    "heart_disease",
+    "gender",
+    "ever_married",
+    "work_type",
+    "Residence_type",
+    "smoking_status",
+)
+
+
+def _validate_artifacts():
+    if state["schema"] is None or state["metadata"] is None or state["model"] is None:
+        return
+
+    feature_names = tuple(feature["name"] for feature in state["schema"].get("features", []))
+    if feature_names != EXPECTED_FEATURES:
+        raise RuntimeError(f"Feature contract không khớp: {feature_names}")
+
+    metadata = state["metadata"]
+    if metadata.get("target") != "stroke" or metadata.get("positive_class") != 1:
+        raise RuntimeError("Target hoặc positive_class trong metadata không khớp.")
+
+    model_steps = getattr(state["model"], "named_steps", {})
+    if "preprocess" not in model_steps or "clf" not in model_steps:
+        raise RuntimeError("model.joblib phải chứa Pipeline gồm preprocess và clf.")
+    if not hasattr(state["model"], "predict_proba"):
+        raise RuntimeError("model.joblib phải hỗ trợ predict_proba().")
+
+    expected_versions = metadata.get("library_versions", {})
+    actual_versions = {
+        "scikit_learn": sklearn.__version__,
+        "numpy": np.__version__,
+        "pandas": pd.__version__,
+    }
+    mismatches = {
+        name: (expected_versions[name], actual_versions[name])
+        for name in actual_versions
+        if expected_versions.get(name) and expected_versions[name] != actual_versions[name]
+    }
+    if mismatches:
+        raise RuntimeError(f"Version thư viện không khớp: {mismatches}")
 
 
 @asynccontextmanager
@@ -48,6 +96,7 @@ async def lifespan(app: FastAPI):
     if os.path.exists(METADATA_PATH):
         with open(METADATA_PATH, encoding="utf-8") as f:
             state["metadata"] = json.load(f)
+    _validate_artifacts()
     yield
     state.clear()
 
@@ -75,8 +124,8 @@ class PredictRequest(BaseModel):
     ever_married: Literal["Yes", "No"]
     work_type: Literal["children", "Govt_job", "Never_worked", "Private", "Self-employed"]
     Residence_type: Literal["Rural", "Urban"]
-    avg_glucose_level: float = Field(..., ge=0)
-    bmi: Optional[float] = Field(None, ge=0)
+    avg_glucose_level: float = Field(..., ge=40, le=300)
+    bmi: Optional[float] = Field(None, ge=10, le=100)
     smoking_status: Literal["formerly smoked", "never smoked", "smokes", "Unknown"]
 
 
@@ -99,7 +148,8 @@ def _risk_level(p: float) -> str:
 
 @app.middleware("http")
 async def add_request_id(request: Request, call_next):
-    request_id = str(uuid.uuid4())
+    request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
+    request.state.request_id = request_id
     t0 = time.perf_counter()
     response = await call_next(request)
     dt = (time.perf_counter() - t0) * 1000
@@ -112,6 +162,9 @@ async def add_request_id(request: Request, call_next):
 def health():
     return {
         "status": "ok" if state["model"] is not None else "model_not_loaded",
+        "service": "ai-service",
+        "port": 8001,
+        "uptime_seconds": round(time.perf_counter() - STARTED_AT, 3),
         "model_loaded": state["model"] is not None,
         "model_name": (state["metadata"] or {}).get("model_name"),
     }
@@ -131,13 +184,23 @@ def get_metadata():
     return state["metadata"]
 
 
+@app.get("/model-info")
+def get_model_info():
+    if state["metadata"] is None:
+        raise HTTPException(status_code=404, detail="metadata.json chưa được nạp.")
+    return state["metadata"]
+
+
 @app.post("/predict", response_model=PredictResponse)
-def predict(payload: PredictRequest):
+def predict(request: Request, payload: PredictRequest):
     if state["model"] is None:
         raise HTTPException(status_code=503, detail="Model chưa sẵn sàng.")
 
-    request_id = str(uuid.uuid4())
-    row = pd.DataFrame([payload.model_dump()])
+    request_id = getattr(request.state, "request_id", str(uuid.uuid4()))
+    payload_values = payload.model_dump()
+    row = pd.DataFrame([
+        {feature["name"]: payload_values.get(feature["name"]) for feature in state["schema"]["features"]}
+    ])
 
     t0 = time.perf_counter()
     try:

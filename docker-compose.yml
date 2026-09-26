@@ -1,58 +1,37 @@
 services:
-  ai-service:
+  frontend:
     build:
-      context: .
-      dockerfile: ai-models/service/Dockerfile
-    container_name: stroke-ai-service
+      context: ./app/frontend
     ports:
-      - "${PORT_AI:-8001}:8001"
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "python",
-          "-c",
-          "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')",
-        ]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
+      - "${FRONTEND_PORT:-3000}:80"
+    environment:
+      API_BASE_URL: ${FRONTEND_API_BASE_URL:-http://localhost:8000}
+    depends_on:
+      - backend
     restart: unless-stopped
-    networks: [stroke-net]
 
   backend:
     build:
       context: ./app/backend
-      dockerfile: Dockerfile
-    container_name: stroke-backend
     ports:
-      - "${PORT_BE:-8000}:8000"
+      - "${BACKEND_PORT:-8000}:8000"
     environment:
-      PORT_BE: 8000
-      AI_SERVICE_URL: http://ai-service:8001
-      MONGODB_URI: ${MONGODB_URI}
-      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      AI_SERVICE_URL: ${AI_SERVICE_URL:-http://ai-service:8001}
     depends_on:
-      ai-service:
-        condition: service_healthy
+      - ai-service
     restart: unless-stopped
-    networks: [stroke-net]
 
-  frontend:
+  ai-service:
     build:
-      context: ./app/frontend
-      dockerfile: Dockerfile
-      args:
-        VITE_API_URL: /api
-    container_name: stroke-frontend
+      context: ./ai-models/service
     ports:
-      - "${PORT_FE:-3000}:80"
-    depends_on:
-      - backend
+      - "${AI_SERVICE_PORT:-8001}:8001"
+    environment:
+      MODEL_PATH: ${MODEL_PATH:-/app/models/model.joblib}
+    volumes:
+      - ./ai-models/models:/app/models:ro
     restart: unless-stopped
-    networks: [stroke-net]
 
 networks:
-  stroke-net:
-    driver: bridge
+  default:
+    name: du-doan-dot-quy-network

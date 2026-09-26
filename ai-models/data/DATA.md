@@ -30,9 +30,14 @@ kaggle datasets download -d fedesoriano/stroke-prediction-dataset -p ai-models/d
 mv ai-models/data/healthcare-dataset-stroke-data.csv ai-models/data/
 ```
 
-## Giải nén dataset.zip (bản giả lập hiện tại)
-```bash
-unzip ai-models/data/dataset.zip -d ai-models/data/
+## Cách notebook và script đọc dữ liệu
+
+Notebook và `ai-models/src/preprocess.py` đọc trực tiếp file CSV bên trong `dataset.zip`.
+Không cần giải nén và không tạo thư mục `data_from_zip`:
+
+```text
+ai-models/data/dataset.zip
+└── healthcare-dataset-stroke-data.csv
 ```
 
 ## Mô tả cột dữ liệu
