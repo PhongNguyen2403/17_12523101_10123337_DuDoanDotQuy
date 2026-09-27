@@ -21,9 +21,8 @@
 │   ├── service/                # FastAPI prediction API + Dockerfile + tests/
 │   └── requirements.txt
 ├── docs/
-│   ├── slide.pptx               # chưa có — bổ sung trước hạn nộp slide
-│   ├── baocao.docx              # chưa có — bổ sung trước hạn nộp báo cáo
-│   └── figures/                 # 5 hình EDA + confusion matrix + so sánh model
+│   ├── baocao.doc               # tệp báo cáo hiện có; cần rà soát nội dung bản cuối
+│   └── figures/                 # 8 hình phân tích dữ liệu và đánh giá model
 ├── docker-compose.yml
 ├── .env.example
 ├── .gitignore
@@ -95,9 +94,9 @@ Kết quả thực tế khi chạy trên **dữ liệu giả lập** trong repo 
 | Model | Recall (Class 1) | ROC-AUC | Precision (Class 1) | F1-Score | Suy luận/mẫu | Kích thước |
 |---|---|---|---|---|---|---|
 | **Logistic Regression** ✅ | 0.80 | 0.88 | 0.18 | 0.30 | ~0.01 ms | 2.3 KB |
-| Naive Bayes | 1.00* | 0.88 | 0.06* | 0.11 | ~0.015 ms | 2.6 KB |
-| SVM (RBF) | 0.78 | 0.88 | 0.18 | 0.29 | ~0.18 ms | 51 KB |
-| Random Forest | 0.69 | 0.88 | 0.24 | 0.35 | ~0.05 ms | 542 KB |
+| Naive Bayes | 1.00* | 0.88 | 0.06* | 0.11 | ~0.02 ms | 2.6 KB |
+| SVM (RBF) | 0.78 | 0.88 | 0.18 | 0.29 | ~0.32 ms | 55 KB |
+| Random Forest | 0.69 | 0.88 | 0.24 | 0.35 | ~0.08 ms | 542 KB |
 
 \* Naive Bayes đạt Recall tuyệt đối nhưng Precision quá thấp (gần như luôn đoán 1) —
 model suy biến, không có giá trị sử dụng thực tế nên **không được chọn** dù Recall cao nhất
@@ -155,12 +154,22 @@ Microservices với 3 Docker container nối chung mạng `stroke-net`:
 
 **Yêu cầu:** Docker + Docker Compose, Git.
 
-```bash
-git clone https://github.com/your-username/17_12523101_10123337_DuDoanDotQuy.git
-cd 17_12523101_10123337_DuDoanDotQuy
-cp .env.example .env
-# Mở .env, điền MONGODB_URI thật (MongoDB Atlas) trước khi chạy
-docker compose up --build
+```powershell
+# Chạy tại thư mục gốc repository
+Copy-Item .env.example .env
+# Mở .env và điền MONGODB_URI hợp lệ để bật lưu lịch sử dự đoán.
+docker compose up --build -d
+docker compose ps
+```
+
+Compose khởi chạy ba dịch vụ; MongoDB không nằm trong compose nên cần MongoDB Atlas
+hoặc MongoDB có thể truy cập được từ container backend. Nếu chưa cấu hình MongoDB,
+API dự đoán vẫn có thể hoạt động nhưng lịch sử sẽ không được lưu.
+
+Theo dõi log hoặc dừng các dịch vụ:
+```powershell
+docker compose logs -f
+docker compose down
 ```
 
 Kiểm tra trạng thái hệ thống:
@@ -168,6 +177,8 @@ Kiểm tra trạng thái hệ thống:
 - Backend Health Check: http://localhost:8000/health
 - AI Service Health Check: http://localhost:8001/health
 - AI Service API Docs (Swagger): http://localhost:8001/docs
+- Backend API: `POST /api/predict`, `GET /api/schema`, `GET /api/model-info`,
+  `GET /api/history` (alias: `GET /api/predictions`).
 
 ## 8. Hướng dẫn huấn luyện lại Model (Retraining Guide)
 
@@ -186,7 +197,7 @@ Mở và chạy lần lượt `ai-models/colab/01_eda.ipynb`, `02_preprocess.ipy
 - `preprocess.py`: xử lý missing value (`bmi`), mã hóa đặc trưng, ColumnTransformer.
 - `train.py`: huấn luyện 4 model + GridSearchCV.
 - `evaluate.py`: so sánh metric, chọn model, đóng gói `model.joblib`/`schema.json`/`metadata.json`,
-  sinh 5 hình EDA + confusion matrix vào `docs/figures/`.
+  sinh 6 hình EDA, biểu đồ so sánh model và confusion matrix vào `docs/figures/`.
 
 Phần 03 lưu 4 pipeline ứng viên tại `ai-models/models/candidates/`, bảng so sánh tại
 `ai-models/models/comparison.json` và metadata train tại `ai-models/models/training_metadata.json`.
@@ -214,48 +225,81 @@ Quản lý qua file `.env` (mẫu tại `.env.example`):
 | `PORT_BE` | 8000 | 8000 | Cổng lắng nghe của Backend |
 | `PORT_AI` | 8001 | 8001 | Cổng lắng nghe của AI Service |
 | `AI_SERVICE_URL` | http://ai-service:8001 | https://stroke-ai-service.onrender.com | Backend gọi sang AI Service |
-| `API_URL` | http://localhost:8000 | https://stroke-backend.onrender.com | Frontend gọi sang Backend API |
 | `MONGODB_URI` | mongodb+srv://... | mongodb+srv://... | Chuỗi kết nối CSDL MongoDB Atlas |
 | `CORS_ORIGIN` | * | https://domain-frontend | Domain được phép gọi Backend |
 
+Frontend hiện gọi API qua đường dẫn cùng host `/api`; Nginx trong Docker chuyển tiếp
+request sang Backend. `API_URL` còn có trong `.env.example` để tham khảo nhưng hiện
+chưa được frontend sử dụng. Khi deploy frontend tách biệt (ví dụ Vercel), cần cấu hình
+proxy/rewrite tới Backend hoặc cập nhật frontend trước khi public.
+
 ## 10. Phương án triển khai (Deployment)
 
-- **Frontend:** Deploy trên Vercel.
+- **Frontend:** Có thể deploy trên Vercel sau khi cấu hình proxy/rewrite `/api` tới Backend.
 - **Backend:** Deploy Web Service dạng Docker trên Render.
 - **AI Service:** Deploy Web Service dạng Docker trên Render.
 
-Mọi kết nối sử dụng địa chỉ public thông qua cấu hình trong `.env`. Khi dùng Ngrok Tunnel:
-cập nhật `.env`, ghi nhật ký vào mục 12, cập nhật link mới tại mục 11.
+Khi dùng ngrok để public Frontend, Nginx chuyển tiếp `/api/` tới Backend qua mạng Docker;
+không cần đổi `API_URL` trong `.env`. Ghi URL tunnel đang hoạt động tại mục 11 và lịch sử
+thay đổi tại mục 12. Nếu public trực tiếp Backend hoặc AI Service, cần cấu hình tunnel riêng.
 
 ## 11. Demo Online (Public URLs)
 
-> Chưa deploy trong lượt tạo repo này — điền lại khi deploy thật.
+Demo đang được public tạm thời qua ngrok tunnel tới Frontend/Nginx. Nginx chuyển tiếp
+các request `/api/` tới Backend trong Docker Compose.
 
-- Frontend: _(chưa deploy)_
-- Backend API: _(chưa deploy)_
-- AI Service OpenAPI Docs: _(chưa deploy)_
+- Frontend: https://revolving-unthawed-arguable.ngrok-free.dev
+- Backend API (schema): https://revolving-unthawed-arguable.ngrok-free.dev/api/schema
+- AI Service OpenAPI Docs: chưa public riêng; chỉ truy cập local tại http://localhost:8001/docs
+
+URL ngrok chỉ hoạt động khi Docker Compose và tiến trình `ngrok http 3000` còn chạy.
+Gói ngrok miễn phí có thể hiển thị trang cảnh báo trước khi mở ứng dụng.
 
 ## 12. Nhật ký đổi cổng / tunnel (Port & Tunnel Change Log)
 
 | Thời điểm (GMT+7) | Cấu phần đổi link | Địa chỉ cũ | Địa chỉ mới | Người thực hiện |
 |---|---|---|---|---|
 | 24/09/2026 | Khởi tạo repo (dữ liệu giả lập) | — | Local only | Claude (hỗ trợ dựng khung) |
+| 27/09/2026 | Frontend `localhost:3000`; Backend API qua proxy `/api` | Local only | https://revolving-unthawed-arguable.ngrok-free.dev | Ngrok tunnel |
+
+Ngrok ánh xạ `https://revolving-unthawed-arguable.ngrok-free.dev` về `http://localhost:3000`.
+Backend (`8000`) và AI Service (`8001`) không được mở trực tiếp trong tunnel này. URL chỉ
+còn hoạt động khi Docker Compose và tiến trình ngrok còn chạy; nếu URL thay đổi, cập nhật
+mục 11 và thêm một dòng nhật ký mới thay vì ghi đè lịch sử.
 
 ## 13. Kết quả kiểm thử hiệu năng (Performance Test Results)
 
-> Chưa chạy k6 load test trong lượt này (cần hệ thống đã deploy hoặc chạy Docker Compose thật).
-> README gốc yêu cầu: 15 Concurrent VUs, 1 phút, chỉ tiêu p95 < 2000 ms và error rate < 1%.
-> Lệnh mẫu k6 (đặt trong `app/backend/tests/load/predict.js` khi chuẩn bị chạy thật):
-> ```bash
-> k6 run --vus 15 --duration 1m app/backend/tests/load/predict.js
-> ```
+Kết quả chạy cục bộ ngày 27/09/2026 bằng k6 2.3.0, qua Frontend/Nginx tới
+`POST /api/predict`:
+
+| Hạng mục | Kết quả |
+|---|---:|
+| Virtual users | 15 |
+| Thời lượng | 1 phút |
+| Tổng request | 4.870 |
+| Throughput | 81,0 request/giây |
+| Độ trễ trung bình | 184,66 ms |
+| Độ trễ p95 | 281,3 ms |
+| Độ trễ tối đa | 562,94 ms |
+| Request/check lỗi | 0 / 0% |
+| Ngưỡng p95 < 2.000 ms | Đạt |
+| Ngưỡng lỗi < 1% | Đạt |
+
+Phép đo chạy với MongoDB Atlas chưa kết nối, nên không bao gồm độ trễ lưu lịch sử dự đoán.
+Đây là kết quả trên máy local, không đại diện cho hiệu năng khi deploy public.
+
+Kịch bản nằm tại `app/backend/tests/load/predict.js`; mặc định chạy 15 VU trong 1 phút.
+Khi đã bật Docker Compose, chạy bằng Docker trên PowerShell:
+```powershell
+docker run --rm -v "$((Get-Location).Path.Replace('\','/'))/app/backend/tests/load:/scripts:ro" -e BASE_URL=http://host.docker.internal:3000 grafana/k6 run /scripts/predict.js
+```
 
 ## 14. Việc còn lại trước khi nộp bài
 
-- [ ] Thay `ai-models/data/dataset.zip` bằng dataset Kaggle thật, chạy lại `train.py` + `evaluate.py`.
+- [x] Thay `ai-models/data/dataset.zip` bằng dataset Kaggle thật, chạy lại `train.py` + `evaluate.py`.
 - [x] Có đủ 4 notebook `.ipynb` trong `ai-models/colab/`.
 - [x] Có contract check tại `ai-models/src/validate_contract.py`.
-- [ ] Tạo `docs/baocao.docx` với nội dung báo cáo chính thức của nhóm.
-- [ ] Tạo `docs/slide.pptx` với nội dung slide chính thức của nhóm.
-- [ ] Deploy thật lên Vercel/Render, điền lại mục 11 và 12.
-- [ ] Chạy k6 load test thật, điền lại mục 13.
+- [x] Có tệp báo cáo `docs/baocao.doc` (rà soát nội dung và định dạng bản cuối trước khi nộp).
+- [ ] Hoàn thiện slide thuyết trình và lưu tại `docs/slide.pptx`.
+- [x] Public demo tạm thời qua Tunnel/Ngrok và điền mục 11, 12 (chưa phải deploy production).
+- [x] Chạy k6 load test cục bộ và ghi kết quả tại mục 13.
