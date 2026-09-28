@@ -16,6 +16,9 @@ import shutil
 from datetime import datetime, timezone
 
 import joblib
+import numpy as np
+import pandas as pd
+import sklearn
 from sklearn.metrics import confusion_matrix
 import matplotlib
 matplotlib.use("Agg")
@@ -58,17 +61,21 @@ MIN_PRECISION = 0.15  # loại các model suy biến kiểu "đoán gần như t
 
 def pick_best_model(results: list) -> dict:
     """
-    Ưu tiên hàng đầu: Recall (lớp 1) và ROC-AUC, nhưng loại các model suy biến
-    (Recall rất cao chỉ vì gần như luôn đoán 1, khiến Precision cực thấp — không
-    có giá trị sử dụng thực tế). Trong các model còn lại (đủ cân bằng, không
-    overfit), chọn Recall cao nhất, hoà thì xét ROC-AUC.
+    Nếu có model đạt Precision lớp 1 tối thiểu, chọn Recall cao nhất rồi ROC-AUC.
+    Nếu không model nào đạt ngưỡng, dùng F1 để cân bằng Precision/Recall, rồi
+    Recall và ROC-AUC làm tie-breaker thay vì chọn model theo Recall đơn thuần.
     """
     candidates = [r for r in results if r.get("model_type", "candidate") != "baseline"]
     if not candidates:
         raise ValueError("comparison.json không có model candidate để triển khai.")
-    balanced = [r for r in candidates if r["precision_class1"] >= MIN_PRECISION]
-    pool = balanced if balanced else candidates
-    return sorted(pool, key=lambda r: (r["recall_class1"], r["roc_auc"]), reverse=True)[0]
+    eligible = [r for r in candidates if r["precision_class1"] >= MIN_PRECISION]
+    if eligible:
+        return sorted(eligible, key=lambda r: (r["recall_class1"], r["roc_auc"]), reverse=True)[0]
+    return sorted(
+        candidates,
+        key=lambda r: (r["f1_class1"], r["recall_class1"], r["roc_auc"]),
+        reverse=True,
+    )[0]
 
 
 def make_eda_figures():
@@ -149,6 +156,16 @@ def main():
 
     best = pick_best_model(results)
     best_name = best["model"]
+    precision_threshold_met = best["precision_class1"] >= MIN_PRECISION
+    if precision_threshold_met:
+        selected_reason = "Precision lớp 1 đạt ngưỡng tối thiểu; chọn Recall test cao nhất, hòa thì chọn ROC-AUC cao hơn."
+        primary_metric = "recall_class1"
+    else:
+        selected_reason = (
+            "Không model nào đạt Precision lớp 1 tối thiểu; dùng F1 test để cân bằng Precision/Recall, "
+            "sau đó ưu tiên Recall và ROC-AUC. Model này chỉ là lựa chọn fallback cho thực nghiệm."
+        )
+        primary_metric = "f1_class1"
     print(f"Model được chọn: {best_name} (Recall={best['recall_class1']}, ROC-AUC={best['roc_auc']})")
 
     # 1) model.joblib — copy pipeline tốt nhất
@@ -162,21 +179,27 @@ def main():
     # 3) metadata.json
     metadata = {
         "model_name": best_name,
-        "selected_reason": "Đã loại model có Precision lớp 1 dưới 0.15 nếu còn model hợp lệ; sau đó chọn Recall test cao nhất, hòa thì chọn ROC-AUC cao hơn.",
+        "selected_reason": selected_reason,
         "selection_rule": {
             "minimum_precision_class1": MIN_PRECISION,
-            "primary_metric": "recall_class1",
-            "tie_breaker": "roc_auc",
+            "precision_threshold_met": precision_threshold_met,
+            "primary_metric": primary_metric,
+            "tie_breakers": ["recall_class1", "roc_auc"] if not precision_threshold_met else ["roc_auc"],
         },
         "metrics": {k: v for k, v in best.items() if k not in ("model", "model_path", "best_params")},
         "best_params": best["best_params"],
         "trained_at_utc": datetime.now(timezone.utc).isoformat(),
         "all_models_compared": [r["model"] for r in results],
+        "library_versions": {
+            "scikit_learn": sklearn.__version__,
+            "numpy": np.__version__,
+            "pandas": pd.__version__,
+        },
         "sklearn_pipeline_steps": ["preprocess (ColumnTransformer)", "clf"],
         "target": "stroke",
         "positive_class": 1,
-        "note": "Model được huấn luyện trên dữ liệu giả lập (synthetic) bám schema Kaggle. "
-                "Thay dataset thật vào ai-models/data/ rồi chạy lại train.py + evaluate.py trước khi dùng thật.",
+        "note": "Model được huấn luyện trên dữ liệu hiện có trong ai-models/data; "
+            "xem ai-models/data/DATA.md để biết nguồn và trạng thái dataset.",
     }
     with open(METADATA_PATH, "w", encoding="utf-8") as f:
         json.dump(metadata, f, ensure_ascii=False, indent=2)

@@ -4,6 +4,9 @@
 > **Giảng viên hướng dẫn:** Nguyễn Đức Tuấn Anh
 > **Phiên bản tài liệu áp dụng:** 2.0 (23/09/2026)
 
+## Cấu trúc Repository
+
+
 ---
 
 ## Cấu trúc Repository
@@ -53,7 +56,7 @@ Bài toán đặt ra là xây dựng mô hình Học máy có khả năng dự �
 dựa trên các chỉ số sinh học và yếu tố thói quen sinh hoạt.
 
 - **Loại bài toán:** Phân loại nhị phân (Binary Classification).
-- **Cột mục tiêu (target):** `stroke` (0: Không có nguy cơ, 1: Có nguy cơ đột quỵ).
+- **Cột mục tiêu (target):** `stroke` (0: Không ghi nhận đột quỵ, 1: Có ghi nhận đột quỵ trong dữ liệu).
 - **Ý nghĩa thực tế:** Cung cấp công cụ hỗ trợ cho y bác sĩ và người dùng tự kiểm tra sức khỏe.
   Do đặc thù y tế, hệ thống ưu tiên giảm thiểu tối đa Âm tính giả (False Negative - FN).
 
@@ -62,12 +65,11 @@ dựa trên các chỉ số sinh học và yếu tố thói quen sinh hoạt.
 - **Nguồn dữ liệu:** Kaggle — [Stroke Prediction Dataset](https://www.kaggle.com/datasets/fedesoriano/stroke-prediction-dataset) (ODbL).
 - **Lưu trữ repo:** `ai-models/data/dataset.zip` (kèm `DATA.md`).
 
-> ⚠️ **Dữ liệu hiện tại là dữ liệu giả lập (synthetic)** được sinh bởi
-> `ai-models/src/make_synthetic_dataset.py` vì môi trường tạo repo này không truy cập được
-> Kaggle trực tiếp. Xem chi tiết cách thay bằng dữ liệu thật tại `ai-models/data/DATA.md`.
+> `ai-models/data/dataset.zip` hiện chứa dữ liệu thật tải từ Kaggle. Xem mô tả nguồn và
+> cách script/notebook đọc dữ liệu tại `ai-models/data/DATA.md`.
 
-Notebook và script đọc trực tiếp `healthcare-dataset-stroke-data.csv` bên trong
-`ai-models/data/dataset.zip`; không cần giải nén dataset.
+Notebook đọc CSV bên trong `dataset.zip`. Script `ai-models/src/preprocess.py` ưu tiên CSV rời
+nếu có, nếu không sẽ đọc từ ZIP; hãy bảo đảm hai tệp cùng nguồn dữ liệu. Hiện repo cung cấp ZIP.
 
 ### Mô tả các đặc trưng (Features)
 - `id`: Mã định danh bệnh nhân (loại bỏ khi huấn luyện).
@@ -84,27 +86,29 @@ Notebook và script đọc trực tiếp `healthcare-dataset-stroke-data.csv` b�
 
 ## 4. Kết quả Model (Model Evaluation & Selection)
 
-Cả 4 model được huấn luyện trên cùng pipeline tiền xử lý, cùng Stratified Train/Test = 80/20,
-GridSearchCV tối ưu theo `recall`. Do dữ liệu mất cân bằng (~5% nhãn 1), chỉ số ưu tiên hàng đầu
-là **Recall (lớp 1)** và **ROC-AUC**.
+Các model được huấn luyện trên cùng pipeline tiền xử lý, cùng Stratified Train/Test = 80/20,
+GridSearchCV tối ưu theo `recall`. Vì dữ liệu mất cân bằng (~5% nhãn 1), báo cáo Recall,
+Precision, F1 và ROC-AUC; không dùng riêng Accuracy để kết luận.
 
-Kết quả thực tế khi chạy trên **dữ liệu giả lập** trong repo này (chạy `train.py` rồi `evaluate.py`
-để tái tạo — số liệu sẽ khác khi dùng dataset Kaggle thật):
+Các số liệu dưới đây được tạo ngày 28/09/2026 trên dữ liệu Kaggle trong
+`ai-models/data/dataset.zip`, với 4.088 mẫu train và 1.022 mẫu test (stratified 80/20).
 
 | Model | Recall (Class 1) | ROC-AUC | Precision (Class 1) | F1-Score | Suy luận/mẫu | Kích thước |
 |---|---|---|---|---|---|---|
-| **Logistic Regression** ✅ | 0.80 | 0.88 | 0.18 | 0.30 | ~0.01 ms | 2.3 KB |
-| Naive Bayes | 1.00* | 0.88 | 0.06* | 0.11 | ~0.02 ms | 2.6 KB |
-| SVM (RBF) | 0.78 | 0.88 | 0.18 | 0.29 | ~0.32 ms | 55 KB |
-| Random Forest | 0.69 | 0.88 | 0.24 | 0.35 | ~0.08 ms | 542 KB |
+| Logistic Regression | 0.8000 | 0.8416 | 0.1342 | 0.2299 | 0.077 ms | 2.3 KB |
+| Naive Bayes | 0.9800 | 0.7860 | 0.0641 | 0.1202 | 0.012 ms | 2.7 KB |
+| SVM (RBF) | 0.7800 | 0.8244 | 0.1238 | 0.2137 | 0.625 ms | 59.2 KB |
+| **Random Forest** | 0.7600 | 0.8254 | 0.1357 | 0.2303 | 0.092 ms | 479.0 KB |
 
-\* Naive Bayes đạt Recall tuyệt đối nhưng Precision quá thấp (gần như luôn đoán 1) —
-model suy biến, không có giá trị sử dụng thực tế nên **không được chọn** dù Recall cao nhất
-(xem tiêu chí lựa chọn trong `ai-models/src/evaluate.py`).
+Không model nào đạt ngưỡng Precision lớp 1 `0.15`. Vì vậy quy tắc fallback chọn F1 cao nhất,
+với Recall và ROC-AUC làm tiêu chí phụ; model được đóng gói là **Random Forest**. Quy tắc này
+tránh chọn Naive Bayes chỉ vì Recall cao trong khi Precision rất thấp. Random Forest có F1 cao
+nhất (`0.2303`), nhưng Precision vẫn chỉ `0.1357`; đây là lựa chọn tốt nhất trong bốn model
+cho lần thực nghiệm này, **không phải khuyến nghị sử dụng lâm sàng**.
 
-**Model được chọn cuối cùng: Logistic Regression** (`class_weight='balanced'`).
-Lý do: Recall cao, cân bằng Precision/Recall hợp lý (không suy biến), pipeline siêu nhẹ,
-tốc độ suy luận nhanh nhất, phù hợp chạy trên container tài nguyên thấp.
+Nếu có model đạt Precision tối thiểu, bộ chọn ưu tiên Recall test cao nhất rồi ROC-AUC. Nếu
+không model nào đạt, bộ chọn dùng F1 test, rồi Recall và ROC-AUC. Metadata ghi lại nhánh chọn
+đã dùng và trạng thái đạt ngưỡng tại `selection_rule`.
 
 Xem số liệu đầy đủ tại `ai-models/models/comparison.json` và `ai-models/models/metadata.json`
 (được sinh tự động mỗi lần chạy `evaluate.py`).
@@ -120,7 +124,7 @@ Xem số liệu đầy đủ tại `ai-models/models/comparison.json` và `ai-mo
 Tái tạo toàn bộ pipeline (từ dữ liệu thô đến model đóng gói):
 ```bash
 cd ai-models/src
-python make_synthetic_dataset.py   # bỏ qua bước này nếu đã có dữ liệu Kaggle thật
+python make_synthetic_dataset.py   # chỉ chạy khi chủ động muốn tạo synthetic; lệnh này ghi đè dữ liệu hiện có
 python train.py                    # huấn luyện 4 model, ghi ai-models/models/comparison.json
 python evaluate.py                 # chọn model tốt nhất, xuất model.joblib/schema.json/metadata.json
 ```
@@ -152,33 +156,125 @@ Microservices với 3 Docker container nối chung mạng `stroke-net`:
 
 ## 7. Hướng dẫn chạy trên máy local (Local Setup)
 
-**Yêu cầu:** Docker + Docker Compose, Git.
+### Yêu cầu
+
+- Windows 10/11 với Docker Desktop đã cài và đang chạy (Linux containers) hoặc Docker Engine có hỗ trợ Docker Compose.
+- Git nếu cần clone repository.
+- RAM trống khuyến nghị từ 4 GB để build các image.
+- MongoDB Atlas hoặc MongoDB có thể truy cập từ container backend nếu muốn lưu lịch sử. MongoDB không được tạo tự động bởi Docker Compose; cấu hình này là tùy chọn.
+
+### Bước 1: Mở đúng thư mục dự án
+
+Mở PowerShell tại thư mục gốc repository, nơi có `docker-compose.yml`. Nếu chưa clone dự án:
 
 ```powershell
-# Chạy tại thư mục gốc repository
-Copy-Item .env.example .env
-# Mở .env và điền MONGODB_URI hợp lệ để bật lưu lịch sử dự đoán.
+git clone <URL-repository>
+cd 17_12523101_10123337_DuDoanDotQuy
+```
+
+Kiểm tra Docker và các tệp cần thiết:
+
+```powershell
+docker --version
+docker compose version
+Test-Path .\docker-compose.yml
+Test-Path .\ai-models\models\model.joblib
+Test-Path .\ai-models\models\schema.json
+```
+
+Hai lệnh `Test-Path` cuối cần trả về `True`. Docker Desktop phải đang chạy trước khi tiếp tục.
+
+### Bước 2: Tạo cấu hình môi trường
+
+Tạo `.env` từ file mẫu; nếu `.env` đã tồn tại, giữ nguyên để tránh ghi đè cấu hình cá nhân:
+
+```powershell
+if (-not (Test-Path .env)) { Copy-Item .env.example .env }
+notepad .env
+```
+
+Các cổng mặc định là Frontend `3000`, Backend `8000` và AI Service `8001`. Có thể giữ nguyên các giá trị mẫu nếu những cổng này chưa được ứng dụng khác sử dụng.
+
+Để bật lưu lịch sử, thay `MONGODB_URI` trong `.env` bằng connection string hợp lệ của MongoDB Atlas hoặc MongoDB khác mà container backend truy cập được. Với Atlas, cần tạo database user và cho phép IP máy chạy Docker trong Network Access. Không chia sẻ hoặc commit `.env` chứa thông tin xác thực.
+
+Nếu chưa cấu hình MongoDB, vẫn có thể chạy giao diện và dự đoán; trạng thái DB sẽ là `disconnected`, còn API lịch sử sẽ trả HTTP `503`.
+
+### Bước 3: Build và khởi động ứng dụng
+
+Chạy tại thư mục gốc repository:
+
+```powershell
+docker compose config --quiet
 docker compose up --build -d
+```
+
+Compose build và khởi động ba dịch vụ: `ai-service`, `backend`, `frontend`. Lần build đầu cần tải các image và cài dependencies nên có thể mất vài phút. AI Service cần sẵn sàng trước khi Backend hoạt động đầy đủ.
+
+Kiểm tra trạng thái container:
+
+```powershell
 docker compose ps
 ```
 
-Compose khởi chạy ba dịch vụ; MongoDB không nằm trong compose nên cần MongoDB Atlas
-hoặc MongoDB có thể truy cập được từ container backend. Nếu chưa cấu hình MongoDB,
-API dự đoán vẫn có thể hoạt động nhưng lịch sử sẽ không được lưu.
+Đợi `ai-service`, `backend` và `frontend` ở trạng thái `Up`; health của `ai-service` cần là `healthy`. Xem log nếu container chưa sẵn sàng:
 
-Theo dõi log hoặc dừng các dịch vụ:
 ```powershell
-docker compose logs -f
+docker compose logs --tail 100 ai-service
+docker compose logs --tail 100 backend
+docker compose logs --tail 100 frontend
+```
+
+### Bước 4: Kiểm tra ứng dụng
+
+Mở giao diện tại <http://localhost:3000>. Kiểm tra các API bằng PowerShell:
+
+```powershell
+Invoke-RestMethod http://localhost:8001/health
+Invoke-RestMethod http://localhost:8000/health
+Invoke-RestMethod http://localhost:8000/api/schema
+```
+
+AI Service cần trả `status: ok` và `model_loaded: true`. Backend cần trả `status: ok`, `aiService: ok`; trường `db` là `connected` nếu đã cấu hình MongoDB, nếu không sẽ là `disconnected`. Tài liệu Swagger của AI Service ở <http://localhost:8001/docs>.
+
+Thử gửi một yêu cầu dự đoán qua Backend:
+
+```powershell
+$body = @{
+  gender = "Female"
+  age = 67
+  hypertension = 0
+  heart_disease = 1
+  ever_married = "Yes"
+  work_type = "Private"
+  Residence_type = "Urban"
+  avg_glucose_level = 228.69
+  bmi = 36.6
+  smoking_status = "formerly smoked"
+} | ConvertTo-Json
+
+Invoke-RestMethod -Method Post `
+  -Uri http://localhost:8000/api/predict `
+  -ContentType "application/json" `
+  -Body $body
+```
+
+Kết quả thành công có các trường `stroke_risk_probability`, `stroke_prediction`, `risk_level` và `model_name`. Đây là đầu ra mô hình hỗ trợ tham khảo, không thay thế chẩn đoán y tế. Lịch sử nằm tại `GET http://localhost:8000/api/history` và chỉ dùng được khi MongoDB đã kết nối.
+
+### Dừng và khởi động lại
+
+```powershell
 docker compose down
 ```
 
-Kiểm tra trạng thái hệ thống:
-- Frontend Web App: http://localhost:3000
-- Backend Health Check: http://localhost:8000/health
-- AI Service Health Check: http://localhost:8001/health
-- AI Service API Docs (Swagger): http://localhost:8001/docs
-- Backend API: `POST /api/predict`, `GET /api/schema`, `GET /api/model-info`,
-  `GET /api/history` (alias: `GET /api/predictions`).
+Lệnh trên dừng và xóa các container/network do Compose tạo, nhưng giữ nguyên image và dữ liệu MongoDB bên ngoài Compose. Khởi động lại lần sau bằng `docker compose up -d`; nếu có thay đổi mã nguồn hoặc Dockerfile, dùng `docker compose up --build -d`.
+
+### Xử lý lỗi thường gặp
+
+- **Cổng đã được sử dụng:** đổi `PORT_FE`, `PORT_BE` hoặc `PORT_AI` trong `.env`, rồi chạy lại `docker compose up -d`. Các URL local cần dùng cổng mới tương ứng.
+- **`ai-service` không healthy hoặc model chưa load:** xem `docker compose logs ai-service`; xác nhận `ai-models/models/model.joblib`, `schema.json` và `metadata.json` tồn tại, tương thích với nhau.
+- **Backend báo `aiService: unreachable`:** chờ AI Service khởi động, kiểm tra trạng thái/log, sau đó chạy `docker compose restart backend` nếu cần.
+- **`db: disconnected`:** kiểm tra `MONGODB_URI`, thông tin xác thực và quyền truy cập mạng của MongoDB. Dự đoán vẫn có thể hoạt động nhưng không lưu lịch sử.
+- **Cần xem log trực tiếp:** chạy `docker compose logs -f`; nhấn `Ctrl+C` chỉ thoát theo dõi log, không dừng container.
 
 ## 8. Hướng dẫn huấn luyện lại Model (Retraining Guide)
 
@@ -296,10 +392,11 @@ docker run --rm -v "$((Get-Location).Path.Replace('\','/'))/app/backend/tests/lo
 
 ## 14. Việc còn lại trước khi nộp bài
 
-- [x] Thay `ai-models/data/dataset.zip` bằng dataset Kaggle thật, chạy lại `train.py` + `evaluate.py`.
+- [x] Thay `ai-models/data/dataset.zip` bằng dataset Kaggle thật.
+- [ ] Chạy lại `train.py` + `evaluate.py` trên dữ liệu Kaggle và cập nhật model/metric; model hiện tại vẫn được metadata ghi nhận là train bằng synthetic.
 - [x] Có đủ 4 notebook `.ipynb` trong `ai-models/colab/`.
 - [x] Có contract check tại `ai-models/src/validate_contract.py`.
 - [x] Có tệp báo cáo `docs/baocao.doc` (rà soát nội dung và định dạng bản cuối trước khi nộp).
-- [ ] Hoàn thiện slide thuyết trình và lưu tại `docs/slide.pptx`.
+- [x] Hoàn thiện slide thuyết trình và lưu tại `docs/slide.pptx`.
 - [x] Public demo tạm thời qua Tunnel/Ngrok và điền mục 11, 12 (chưa phải deploy production).
 - [x] Chạy k6 load test cục bộ và ghi kết quả tại mục 13.

@@ -1,4 +1,4 @@
-# Mô tả dữ liệu (DATA.md)
+# Mô tả dữ liệu
 
 ## Nguồn dữ liệu
 - **Tên:** Stroke Prediction Dataset
@@ -7,33 +7,15 @@
 - **Giấy phép:** Open Database License (ODbL) v1.0
 - **Số dòng:** 5110 bệnh nhân | **Số cột:** 12
 
-## ⚠️ Lưu ý quan trọng
-File `dataset.zip` trong thư mục này hiện là **dữ liệu giả lập (synthetic)**,
-được sinh bởi `ai-models/src/make_synthetic_dataset.py` để mô phỏng đúng:
-- Schema (đúng 12 cột, đúng kiểu dữ liệu, đúng nhãn giá trị).
-- Tỷ lệ mất cân bằng lớp mục tiêu (~5% `stroke = 1`).
-- Tỷ lệ giá trị khuyết ở cột `bmi` (~4%).
-- Quan hệ tương quan hợp lý giữa tuổi/huyết áp/tim mạch/đường huyết và nguy cơ đột quỵ,
-  để 4 model có tín hiệu thật để học thay vì nhiễu ngẫu nhiên.
+## Trạng thái dữ liệu
 
-**Trước khi nộp bài / báo cáo kết quả chính thức**, hãy:
-1. Tải file thật từ Kaggle (cần tài khoản Kaggle + `kaggle.json` API token).
-2. Giải nén đè vào `ai-models/data/healthcare-dataset-stroke-data.csv`.
-3. Chạy lại toàn bộ pipeline: `preprocess.py` → `train.py` → `evaluate.py`.
-   Không cần sửa code — schema giống hệt nhau.
+> File `dataset.zip` trong thư mục này chứa **dữ liệu thật** từ bộ dữ liệu trên Kaggle, không phải dữ liệu tổng hợp. Không cần tải lại dữ liệu trước khi chạy hoặc báo cáo kết quả.
 
-## Cách tải dữ liệu thật bằng Kaggle CLI
-```bash
-pip install kaggle
-# đặt kaggle.json vào ~/.kaggle/kaggle.json (KHÔNG commit file này lên git)
-kaggle datasets download -d fedesoriano/stroke-prediction-dataset -p ai-models/data --unzip
-mv ai-models/data/healthcare-dataset-stroke-data.csv ai-models/data/
-```
+Trong thư mục hiện tại, dữ liệu được cung cấp dưới dạng ZIP. Notebook đọc CSV bên trong ZIP; `ai-models/src/preprocess.py` cũng đọc ZIP khi không tìm thấy CSV rời. Nếu bổ sung `healthcare-dataset-stroke-data.csv` vào cùng thư mục, script sẽ ưu tiên CSV rời đó, vì vậy hãy bảo đảm CSV và ZIP cùng nguồn và cùng phiên bản.
 
 ## Cách notebook và script đọc dữ liệu
 
-Notebook và `ai-models/src/preprocess.py` đọc trực tiếp file CSV bên trong `dataset.zip`.
-Không cần giải nén và không tạo thư mục `data_from_zip`:
+Notebook đọc trực tiếp CSV bên trong `dataset.zip`. Script `preprocess.py` đọc CSV rời nếu có, nếu không sẽ đọc CSV trong ZIP. Không cần tạo thư mục `data_from_zip`:
 
 ```text
 ai-models/data/dataset.zip
@@ -54,4 +36,4 @@ ai-models/data/dataset.zip
 | avg_glucose_level | float | Mức đường huyết trung bình |
 | bmi | float | Body Mass Index (có missing) |
 | smoking_status | category | formerly smoked / never smoked / smokes / Unknown |
-| stroke | int(0/1) | **Target**: 1 = có nguy cơ đột quỵ |
+| stroke | int(0/1) | **Nhãn mục tiêu:** 1 = hồ sơ có ghi nhận đột quỵ, 0 = không ghi nhận; đây không phải dự đoán chẩn đoán nguy cơ |
