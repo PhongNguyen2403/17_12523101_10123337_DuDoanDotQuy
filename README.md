@@ -124,7 +124,6 @@ Xem số liệu đầy đủ tại `ai-models/models/comparison.json` và `ai-mo
 Tái tạo toàn bộ pipeline (từ dữ liệu thô đến model đóng gói):
 ```bash
 cd ai-models/src
-python make_synthetic_dataset.py   # chỉ chạy khi chủ động muốn tạo synthetic; lệnh này ghi đè dữ liệu hiện có
 python train.py                    # huấn luyện 4 model, ghi ai-models/models/comparison.json
 python evaluate.py                 # chọn model tốt nhất, xuất model.joblib/schema.json/metadata.json
 ```
@@ -393,7 +392,7 @@ docker run --rm -v "$((Get-Location).Path.Replace('\','/'))/app/backend/tests/lo
 ## 14. Việc còn lại trước khi nộp bài
 
 - [x] Thay `ai-models/data/dataset.zip` bằng dataset Kaggle thật.
-- [ ] Chạy lại `train.py` + `evaluate.py` trên dữ liệu Kaggle và cập nhật model/metric; model hiện tại vẫn được metadata ghi nhận là train bằng synthetic.
+- [x] Chạy lại `train.py` + `evaluate.py` trên dữ liệu Kaggle và cập nhật model/metric; 
 - [x] Có đủ 4 notebook `.ipynb` trong `ai-models/colab/`.
 - [x] Có contract check tại `ai-models/src/validate_contract.py`.
 - [x] Có tệp báo cáo `docs/baocao.doc` (rà soát nội dung và định dạng bản cuối trước khi nộp).
